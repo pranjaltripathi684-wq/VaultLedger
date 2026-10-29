@@ -1,0 +1,409 @@
+/* ============================================================================
+   ENTERPRISE FINANCIAL DESIGN SYSTEM - REUSABLE COMPONENTS
+   Layout, Glass Cards, Modals, Forms, Chips, Tables, & Alert Banners
+   ============================================================================ */
+
+/* App Layout Structure */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--bg-card);
+    border-right: 1px solid var(--border-color);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+.sidebar-brand-box {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.brand-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.toggle-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sidebar-nav {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav li a {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.sidebar-nav li a:hover {
+    background-color: var(--bg-subtle);
+    border-color: var(--border-color);
+    color: var(--primary);
+    transform: translateX(3px);
+}
+
+.main-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.content-top-header {
+    padding: 18px 36px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+}
+
+.page-content {
+    padding: 30px 36px;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Glassmorphism Card Container */
+.card-glass {
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-glass:hover {
+    border-color: var(--border-glow);
+    box-shadow: var(--shadow-md);
+}
+
+/* Buttons System */
+.btn-primary {
+    background: var(--primary);
+    color: #ffffff !important;
+    border: none;
+    padding: 9px 18px;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    box-shadow: 0 2px 6px var(--primary-glow);
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.btn-control {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.btn-control:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-add-transaction {
+    background: var(--primary);
+    color: #ffffff !important;
+    padding: 9px 18px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.92rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 6px var(--primary-glow);
+}
+
+.btn-add-transaction:hover {
+    filter: brightness(1.1);
+}
+
+/* Form Controls & Inputs */
+.input-glass {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-primary);
+    padding: 9px 14px;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+}
+
+.input-glass:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* Interactive Category Filter Chips */
+.chip-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+}
+
+.chip:hover {
+    background: var(--bg-subtle);
+    color: var(--text-primary);
+    border-color: var(--primary-glow);
+}
+
+.chip.active {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px var(--primary-glow);
+}
+
+/* Flash Alerts & Banners */
+.flash-messages {
+    margin-bottom: 24px;
+}
+
+.alert {
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+}
+
+.alert-success { background-color: var(--income-subtle); color: var(--income); border: 1px solid rgba(16, 185, 129, 0.3); }
+.alert-info    { background-color: var(--primary-glow); color: var(--primary); border: 1px solid rgba(37, 99, 235, 0.3); }
+.alert-warning { background-color: var(--warning-subtle); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+.alert-error   { background-color: var(--expense-subtle); color: var(--expense); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+/* Cryptographic Audit Status Banner */
+.audit-banner {
+    margin-bottom: 24px;
+    padding: 16px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.sentinel-alert-box {
+    background: rgba(239, 68, 68, 0.06);
+    border-color: rgba(239, 68, 68, 0.25);
+    margin-bottom: 26px;
+    padding: 20px 24px;
+}
+
+/* Table Design */
+.table-glass {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-glass th {
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table-glass td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.92rem;
+    color: var(--text-primary);
+}
+
+.table-glass tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.table-glass tbody tr:hover {
+    background-color: var(--bg-subtle);
+}
+
+.category-badge {
+    background: var(--bg-subtle);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.audit-code {
+    font-size: 0.75rem;
+    background: var(--bg-subtle);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+/* Native <dialog> Modal Styling with Backdrop Blur & Scale Animation */
+dialog.glass-modal {
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-glow);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    color: var(--text-primary);
+    padding: 28px;
+    width: 92%;
+    max-width: 520px;
+    margin: auto;
+    position: fixed;
+    inset: 0;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.25s ease, transform 0.25s ease, display 0.25s allow-discrete;
+}
+
+dialog.glass-modal[open] {
+    opacity: 1;
+    transform: scale(1);
+}
+
+@starting-style {
+    dialog.glass-modal[open] {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+dialog.glass-modal::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+dialog.glass-modal[open]::backdrop {
+    opacity: 1;
+}
+
+@starting-style {
+    dialog.glass-modal[open]::backdrop {
+        opacity: 0;
+    }
+}
+
+/* Floating Bulk Operations Toolbar */
+.bulk-toolbar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-glow);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-lg);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.bulk-toolbar.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    visibility: visible;
+}

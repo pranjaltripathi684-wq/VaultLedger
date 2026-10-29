@@ -1,0 +1,185 @@
+/* ============================================================================
+   ENTERPRISE FINANCIAL DESIGN SYSTEM - DASHBOARD & HUB LAYOUTS
+   Metric Grids, Sparklines, Insights Bar, Budgets, & Financial Hub Grids
+   ============================================================================ */
+
+/* Summary Metrics Layout */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.metric-card {
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: var(--shadow-sm);
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-glow);
+}
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.metric-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.metric-sparkline {
+    width: 80px;
+    height: 32px;
+}
+
+.metric-value-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.metric-amount {
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+/* Spending Insights Bar */
+.insights-bar {
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 15px;
+    text-align: center;
+    padding: 20px 24px;
+}
+
+.insight-item {
+    flex: 1;
+    min-width: 180px;
+}
+
+.insight-divider {
+    border-left: 1px solid var(--border-color);
+    padding-left: 20px;
+}
+
+.insight-title {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.insight-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-top: 4px;
+}
+
+.insight-subtext {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Monthly Category Budgets Grid */
+.budget-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.budget-card {
+    background: var(--bg-subtle);
+    padding: 18px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.budget-progress-bar {
+    background: var(--border-color);
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.budget-progress-fill {
+    height: 100%;
+    transition: width 0.4s ease-in-out;
+}
+
+/* Financial Hub Grids */
+.wallet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.wallet-card {
+    background: var(--bg-subtle);
+    padding: 16px 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.sub-timeline {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.sub-card {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    min-width: 220px;
+    flex-shrink: 0;
+}
+
+.goal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 18px;
+}
+
+.goal-card {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 18px;
+}
+
+.tax-summary-row {
+    display: flex;
+    justify-content: space-around;
+    background: var(--bg-subtle);
+    padding: 14px 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 14px;
+    text-align: center;
+}

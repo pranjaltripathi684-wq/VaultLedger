@@ -1,0 +1,155 @@
+/* ============================================================================
+   ENTERPRISE FINANCIAL DESIGN SYSTEM - THEME & CORE VARIABLES
+   Font: Inter | Micro-Elevations & Glassmorphism Tokens
+   ============================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    /* Color Palette - Light Mode */
+    --bg-page: #f8fafc;
+    --bg-card: rgba(255, 255, 255, 0.85);
+    --bg-card-hover: rgba(255, 255, 255, 0.95);
+    --bg-subtle: #f1f5f9;
+    --border-color: rgba(226, 232, 240, 0.8);
+    --border-glow: rgba(37, 99, 235, 0.2);
+    
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    
+    --input-bg: #ffffff;
+    --input-border: #cbd5e1;
+    
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-glow: rgba(37, 99, 235, 0.15);
+    
+    --income: #10b981;
+    --income-subtle: rgba(16, 185, 129, 0.12);
+    
+    --expense: #ef4444;
+    --expense-subtle: rgba(239, 68, 68, 0.12);
+    
+    --warning: #f59e0b;
+    --warning-subtle: rgba(245, 158, 11, 0.12);
+
+    /* Glassmorphism & Elevation */
+    --glass-blur: blur(14px);
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+    --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+    --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+    
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --sidebar-width: 270px;
+}
+
+body.dark-mode {
+    /* Color Palette - Dark Mode */
+    --bg-page: #090d16;
+    --bg-card: rgba(18, 25, 41, 0.75);
+    --bg-card-hover: rgba(24, 34, 56, 0.85);
+    --bg-subtle: #141c2e;
+    --border-color: rgba(39, 53, 83, 0.7);
+    --border-glow: rgba(59, 130, 246, 0.3);
+    
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    
+    --input-bg: #0e1422;
+    --input-border: #273553;
+    
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --primary-glow: rgba(59, 130, 246, 0.25);
+    
+    --income: #10b981;
+    --income-subtle: rgba(16, 185, 129, 0.15);
+    
+    --expense: #f87171;
+    --expense-subtle: rgba(248, 113, 113, 0.15);
+    
+    --warning: #fbbf24;
+    --warning-subtle: rgba(251, 191, 36, 0.15);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Base Reset & Typography */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-page);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Privacy Mode Blur Effect */
+body.privacy-active .money-value {
+    filter: blur(7px);
+    user-select: none;
+}
+
+/* Global Utility Classes */
+.text-primary { color: var(--text-primary); }
+.text-muted { color: var(--text-muted); }
+.text-income { color: var(--income); }
+.text-expense { color: var(--expense); }
+.text-warning { color: var(--warning); }
+
+.font-bold { font-weight: 700; }
+.font-extrabold { font-weight: 800; }
+.text-sm { font-size: 0.82rem; }
+.text-xs { font-size: 0.75rem; }
+
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.flex-align-center {
+    display: flex;
+    align-items: center;
+}
+
+.gap-xs { gap: 6px; }
+.gap-sm { gap: 10px; }
+.gap-md { gap: 16px; }
+.gap-lg { gap: 24px; }
+
+.mb-sm { margin-bottom: 12px; }
+.mb-md { margin-bottom: 20px; }
+.mb-lg { margin-bottom: 30px; }

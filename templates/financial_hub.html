@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block title %}Financial Hub - Finance Tracker{% endblock %}
+
+{% block content %}
+<!-- Header Row -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+        <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-primary); margin: 0;">⚡ Advanced Financial Hub</h2>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Manage multi-account wallets, recurring subscriptions, savings buckets, and quarterly taxes</div>
+    </div>
+    
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <label for="hubCurrency" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Display Currency:</label>
+        <select id="hubCurrency" class="input-glass" onchange="window.location.href='/financial-hub?currency=' + this.value" style="padding: 6px 14px; font-weight: 700; font-size: 0.88rem; cursor: pointer;">
+            {% for code, symbol in currency_symbols.items() %}
+                <option value="{{ code }}" {% if code == selected_currency %}selected{% endif %}>{{ code }} ({{ symbol }})</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<!-- 1. 💳 Multi-Account & Wallet Balances -->
+<section class="card-glass" style="margin-bottom: 28px; padding: 22px 26px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+            💳 Multi-Account Wallets
+        </h3>
+        <button type="button" onclick="document.getElementById('addAccountModal').showModal()" class="btn-primary" style="font-size: 0.82rem; padding: 6px 14px;">
+            + Add Account
+        </button>
+    </div>
+
+    {% if account_balances %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+        {% for acc in account_balances %}
+        <div style="background: var(--bg-subtle); padding: 16px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color); border-left: 5px solid {{ acc.color }};">
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">{{ acc.name }}</div>
+            <div class="money-value" style="font-size: 1.4rem; font-weight: 800; color: var(--text-primary); margin-top: 4px;">
+                {{ curr_symbol }}{{ "%.2f"|format(acc.balance_disp) }}
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: capitalize; margin-top: 2px;">{{ acc.type|replace('_', ' ') }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 30px; color: var(--text-muted); font-style: italic; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
+        No accounts configured. Click <strong>+ Add Account</strong> to set up Chase, HDFC, Amex, or Crypto wallets.
+    </div>
+    {% endif %}
+</section>
+
+<!-- 2. 🔄 Upcoming Subscriptions Timeline -->
+<section class="card-glass" style="margin-bottom: 28px; padding: 22px 26px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+                🔄 Subscriptions & Recurring Sentinel
+            </h3>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Auto-tracked recurring payments for the next 30 days</div>
+        </div>
+        <button type="button" onclick="document.getElementById('addSubModal').showModal()" class="btn-primary" style="font-size: 0.82rem; padding: 6px 14px;">
+            + Add Subscription
+        </button>
+    </div>
+
+    {% if upcoming_subscriptions %}
+    <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
+        {% for sub in upcoming_subscriptions %}
+        <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px 20px; min-width: 220px; flex-shrink: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <strong style="font-size: 0.95rem; color: var(--text-primary);">{{ sub.name }}</strong>
+                <span style="font-size: 0.72rem; font-weight: 700; color: {% if sub.days_until <= 3 %}var(--expense){% elif sub.days_until <= 7 %}var(--warning){% else %}var(--primary){% endif %}; background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 4px;">
+                    {% if sub.days_until < 0 %}Overdue {{ -sub.days_until }}d{% elif sub.days_until == 0 %}Due Today{% else %}Due in {{ sub.days_until }}d{% endif %}
+                </span>
+            </div>
+            <div class="money-value" style="font-size: 1.2rem; font-weight: 800; color: var(--expense);">
+                {{ curr_symbol }}{{ "%.2f"|format(sub.amount_disp) }}
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Due Date: {{ sub.next_due_date }} ({{ sub.cycle }})</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 30px; color: var(--text-muted); font-style: italic; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
+        No recurring subscriptions tracked. Click <strong>+ Add Subscription</strong> to track software, rent, or memberships.
+    </div>
+    {% endif %}
+</section>
+
+<!-- 3. 🎯 Visual Savings Goals Buckets -->
+<section class="card-glass" style="margin-bottom: 28px; padding: 22px 26px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+            🎯 Visual Savings Goals & Target Buckets
+        </h3>
+        <button type="button" onclick="document.getElementById('addGoalModal').showModal()" class="btn-primary" style="font-size: 0.82rem; padding: 6px 14px;">
+            + Add Savings Goal
+        </button>
+    </div>
+
+    {% if savings_goals %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px;">
+        {% for goal in savings_goals %}
+        <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 700; font-size: 0.98rem; color: var(--text-primary);">{{ goal.icon }} {{ goal.title }}</span>
+                <span style="font-size: 0.8rem; font-weight: 800; color: var(--primary);">{{ goal.percent }}%</span>
+            </div>
+            <div style="background: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 12px;">
+                <div style="background: var(--primary); height: 100%; width: {{ goal.percent }}%; transition: width 0.4s ease;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                <span class="money-value" style="color: var(--text-primary); font-weight: 700;">{{ curr_symbol }}{{ "%.2f"|format(goal.current_disp) }} / {{ curr_symbol }}{{ "%.2f"|format(goal.target_disp) }}</span>
+                <button type="button" onclick='openDepositModal({{ goal.id }}, {{ (goal.title ~ " (" ~ goal.currency ~ ")")|tojson }})' style="background: var(--primary-glow); border: 1px solid var(--primary); color: var(--primary); font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; cursor: pointer;">+ Deposit</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 30px; color: var(--text-muted); font-style: italic; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
+        No savings goals created. Click <strong>+ Add Savings Goal</strong> to track Emergency Funds, Vacation, or Tech target buckets.
+    </div>
+    {% endif %}
+</section>
+
+<!-- 4. 📊 Quarterly Tax Liability Estimator -->
+<section class="card-glass" style="margin-bottom: 28px; padding: 22px 26px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+                📊 Quarterly Tax Liability Estimator
+            </h3>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Estimated 25% effective tax rate on net taxable income</div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Est. Quarterly Payment</div>
+            <div class="money-value" style="font-size: 1.35rem; font-weight: 800; color: var(--warning);">
+                {{ curr_symbol }}{{ "%.2f"|format(tax_stats.est_quarterly_payment) }}
+            </div>
+        </div>
+    </div>
+    <div style="display: flex; justify-content: space-around; background: var(--bg-subtle); padding: 14px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color); flex-wrap: wrap; gap: 14px; text-align: center;">
+        <div>
+            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Taxable Net Profit:</span>
+            <strong class="money-value" style="font-size: 1rem; color: var(--text-primary); margin-left: 6px;">{{ curr_symbol }}{{ "%.2f"|format(tax_stats.taxable_net) }}</strong>
+        </div>
+        <div style="border-left: 1px solid var(--border-color); padding-left: 16px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Total Tax Estimate (25%):</span>
+            <strong class="money-value" style="font-size: 1rem; color: var(--warning); margin-left: 6px;">{{ curr_symbol }}{{ "%.2f"|format(tax_stats.est_tax_amount) }}</strong>
+        </div>
+    </div>
+</section>
+
+<!-- MODAL 1: Add Account -->
+<dialog id="addAccountModal" class="glass-modal">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0;">💳 Add Wallet Account</h3>
+        <button type="button" onclick="document.getElementById('addAccountModal').close()" style="background: none; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('add_account') }}">
+        <div style="margin-bottom: 12px;">
+            <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Account Name:</label>
+            <input type="text" name="name" class="input-glass" placeholder="e.g. Chase Checking, HDFC Savings, Crypto" required style="width: 100%;">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div>
+                <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Type:</label>
+                <select name="account_type" class="input-glass" style="width: 100%;">
+                    <option value="checking">Checking</option>
+                    <option value="savings">Savings</option>
+                    <option value="credit_card">Credit Card</option>
+                    <option value="crypto">Crypto Wallet</option>
+                    <option value="cash">Cash</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Currency:</label>
+                <select name="currency" class="input-glass" style="width: 100%;">
+                    {% for code in currency_symbols.keys() %}
+                        <option value="{{ code }}">{{ code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 16px;">
+            <div>
+                <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Initial Balance:</label>
+                <input type="number" name="initial_balance" step="0.01" class="input-glass" placeholder="0.00" required style="width: 100%;">
+            </div>
+            <div>
+                <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Badge Color:</label>
+                <input type="color" name="color" value="#2563eb" style="width: 100%; height: 38px; cursor: pointer; border-radius: 6px; border: 1px solid var(--border-color);">
+            </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" onclick="document.getElementById('addAccountModal').close()" style="background: var(--bg-subtle); border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 14px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer;">Cancel</button>
+            <button type="submit" class="btn-primary">Create Account</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- MODAL 2: Add Subscription -->
+<dialog id="addSubModal" class="glass-modal">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0;">🔄 Add Subscription</h3>
+        <button type="button" onclick="document.getElementById('addSubModal').close()" style="background: none; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('add_subscription') }}">
+        <div style="margin-bottom: 12px;">
+            <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Subscription Name:</label>
+            <input type="text" name="name" class="input-glass" placeholder="e.g. Netflix, AWS, Rent" required style="width: 100%;">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div>
+                <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Amount:</label>
+                <input type="number" name="amount" step="0.01" min="0.01" class="input-glass" placeholder="0.00" required style="width: 100%;">
+            </div>
+            <div>
+                <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Currency:</label>
+                <select name="currency" class="input-glass" style="width: 100%;">
+                    {% for code in currency_symbols.keys() %}
+                        <option value="{{ code }}">{{ code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+            <div>
+                <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Cycle:</label>
+                <select name="billing_cycle" class="input-glass" style="width: 100%;">
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="weekly">Weekly</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Next Due Date:</label>
+                <input type="date" name="next_due_date" class="input-glass" required style="width: 100%;">
+            </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" onclick="document.getElementById('addSubModal').close()" style="background: var(--bg-subtle); border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 14px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer;">Cancel</button>
+            <button type="submit" class="btn-primary">Add Subscription</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- MODAL 3: Add Savings Goal -->
+<dialog id="addGoalModal" class="glass-modal">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0;">🎯 Add Savings Goal</h3>
+        <button type="button" onclick="document.getElementById('addGoalModal').close()" style="background: none; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('add_savings_goal') }}">
+        <div style="display: grid; grid-template-columns: 4fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div>
+                <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Goal Title:</label>
+                <input type="text" name="title" class="input-glass" placeholder="e.g. Emergency Fund, New Laptop" required style="width: 100%;">
+            </div>
+            <div>
+                <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Icon:</label>
+                <input type="text" name="icon" value="🎯" class="input-glass" required style="width: 100%; text-align: center;">
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+            <div>
+                <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Target Amount:</label>
+                <input type="number" name="target_amount" step="0.01" min="0.01" class="input-glass" placeholder="1000.00" required style="width: 100%;">
+            </div>
+            <div>
+                <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Starting Saved:</label>
+                <input type="number" name="current_amount" step="0.01" min="0" value="0.00" class="input-glass" style="width: 100%;">
+            </div>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Currency:</label>
+            <select name="currency" class="input-glass" style="width: 100%;">
+                {% for code in currency_symbols.keys() %}
+                    <option value="{{ code }}" {% if code == selected_currency %}selected{% endif %}>{{ code }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" onclick="document.getElementById('addGoalModal').close()" style="background: var(--bg-subtle); border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 14px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer;">Cancel</button>
+            <button type="submit" class="btn-primary">Create Goal</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- MODAL 4: Savings Deposit -->
+<dialog id="depositModal" class="glass-modal">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 id="depositModalTitle" style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0;">💰 Deposit to Goal</h3>
+        <button type="button" onclick="document.getElementById('depositModal').close()" style="background: none; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer;">✕</button>
+    </div>
+    <form id="depositForm" method="POST" action="">
+        <div style="margin-bottom: 16px;">
+            <label for="deposit_amount" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Deposit Amount:</label>
+            <input type="number" id="deposit_amount" name="deposit_amount" step="0.01" min="0.01" class="input-glass" placeholder="0.00" required style="width: 100%;">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" onclick="document.getElementById('depositModal').close()" style="background: var(--bg-subtle); border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 14px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer;">Cancel</button>
+            <button type="submit" class="btn-primary">Deposit Funds</button>
+        </div>
+    </form>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openDepositModal(goalId, goalTitle) {
+        document.getElementById('depositModalTitle').textContent = `💰 Deposit into ${goalTitle}`;
+        document.getElementById('depositForm').action = `/savings/deposit/${goalId}`;
+        document.getElementById('deposit_amount').value = '';
+        document.getElementById('depositModal').showModal();
+    }
+</script>
+{% endblock %}

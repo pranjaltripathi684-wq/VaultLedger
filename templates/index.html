@@ -1,0 +1,520 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Finance Tracker{% endblock %}
+
+{% block content %}
+<!-- Cryptographic Audit Status Banner -->
+<div class="card-glass audit-banner">
+    <div class="flex-align-center gap-sm">
+        <span style="font-size: 1.3rem;">{% if ledger_valid %}🛡️{% else %}🚨{% endif %}</span>
+        <div>
+            <div class="font-bold" style="font-size: 0.9rem; color: {% if ledger_valid %}var(--income){% else %}var(--expense){% endif %};">
+                {% if ledger_valid %}
+                    SHA-256 Cryptographic Chain: Verified ({{ total_verified }} blocks intact)
+                {% else %}
+                    TAMPER ALERT: Broken Chain at Transaction #{{ compromised_id }}!
+                {% endif %}
+            </div>
+            <div class="text-xs text-muted">Immutable Merkle-style hash link prevents direct database manipulation</div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('audit_verify') }}" class="form-inline">
+        <button type="submit" class="btn-control">⚡ Verify Integrity Now</button>
+    </form>
+</div>
+
+<!-- Algorithmic Anomaly & Fraud Sentinel Alert Drawer -->
+{% if anomalies %}
+<div class="card-glass sentinel-alert-box">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.25rem;">🚨</span>
+            <h3 style="font-size: 1rem; color: var(--expense); margin: 0; font-weight: 700;">Sentinel Audit: {{ anomalies|length }} Anomalies Detected</h3>
+        </div>
+
+        <form method="POST" action="{{ url_for('recheck_anomalies') }}" style="margin: 0; padding: 0;">
+            <button type="submit" class="btn-control" style="font-size: 0.8rem; padding: 6px 14px; cursor: pointer;">
+                🔄 Re-check Sentinel
+            </button>
+        </form>
+    </div>
+
+    <ul style="list-style: none; padding-left: 0; margin: 0;">
+        {% for a in anomalies %}
+        <li style="font-size: 0.88rem; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; background: var(--bg-card); padding: 12px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="background: {% if a.level == 'danger' %}var(--expense){% else %}var(--warning){% endif %}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">
+                    {{ a.type }}
+                </span>
+                <span style="color: var(--text-primary); font-weight: 500;">{{ a.message }}</span>
+            </div>
+
+            <form method="POST" action="{{ url_for('dismiss_anomaly', id=a.transaction_id) }}" style="margin: 0; padding: 0;">
+                <button type="submit" style="background: var(--bg-subtle); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.78rem; font-weight: 600; padding: 5px 12px; border-radius: var(--radius-sm); cursor: pointer;">
+                    ✓ Allow & Dismiss
+                </button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Dashboard Display Currency Controls -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+    <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0;">Financial Overview</h2>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <label for="dashboardCurrency" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Display Currency:</label>
+        <select id="dashboardCurrency" class="input-glass" onchange="window.location.href='{{ url_for('index') }}?currency=' + encodeURIComponent(this.value)" style="padding: 6px 14px; font-weight: 700; font-size: 0.88rem; cursor: pointer;">
+            {% for code, symbol in currency_symbols.items() %}
+                <option value="{{ code }}" {% if code == selected_currency %}selected{% endif %}>{{ code }} ({{ symbol }})</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<!-- Summary Metrics Cards with 7-Day Sparkline Mini Charts -->
+<section class="summary-grid">
+    <!-- Income Card -->
+    <div class="metric-card">
+        <div class="metric-header">
+            <span class="metric-title">Total Income</span>
+            <div class="metric-sparkline">
+                <canvas id="sparklineIncome"></canvas>
+            </div>
+        </div>
+        <div class="metric-value-row">
+            <div class="metric-amount money-value" style="color: var(--income);">+{{ curr_symbol }}{{ "%.2f"|format(total_income) }}</div>
+        </div>
+        <div style="font-size: 0.8rem; margin-top: 8px;">
+            {% if comparison.income_change is not none %}
+                {% if comparison.income_change >= 0 %}
+                    <span style="color: var(--income); font-weight: 700;">+{{ comparison.income_change }}%</span> vs {{ comparison.prev_month_name }}
+                {% else %}
+                    <span style="color: var(--expense); font-weight: 700;">{{ comparison.income_change }}%</span> vs {{ comparison.prev_month_name }}
+                {% endif %}
+            {% else %}
+                <span style="color: var(--text-muted);">No data from {{ comparison.prev_month_name }}</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Expense Card -->
+    <div class="metric-card">
+        <div class="metric-header">
+            <span class="metric-title">Total Expenses</span>
+            <div class="metric-sparkline">
+                <canvas id="sparklineExpense"></canvas>
+            </div>
+        </div>
+        <div class="metric-value-row">
+            <div class="metric-amount money-value" style="color: var(--expense);">-{{ curr_symbol }}{{ "%.2f"|format(total_expense) }}</div>
+        </div>
+        <div style="font-size: 0.8rem; margin-top: 8px;">
+            {% if comparison.expense_change is not none %}
+                {% if comparison.expense_change <= 0 %}
+                    <span style="color: var(--income); font-weight: 700;">{{ comparison.expense_change }}%</span> vs {{ comparison.prev_month_name }}
+                {% else %}
+                    <span style="color: var(--expense); font-weight: 700;">+{{ comparison.expense_change }}%</span> vs {{ comparison.prev_month_name }}
+                {% endif %}
+            {% else %}
+                <span style="color: var(--text-muted);">No data from {{ comparison.prev_month_name }}</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Net Balance Card -->
+    <div class="metric-card">
+        <div class="metric-header">
+            <span class="metric-title">Net Balance</span>
+            <div class="metric-sparkline">
+                <canvas id="sparklineNet"></canvas>
+            </div>
+        </div>
+        <div class="metric-value-row">
+            <div class="metric-amount money-value" style="color: {% if balance >= 0 %}var(--income){% else %}var(--expense){% endif %};">
+                {{ curr_symbol }}{{ "%.2f"|format(balance) }}
+            </div>
+        </div>
+        <div style="font-size: 0.8rem; margin-top: 8px; color: var(--text-muted);">
+            All-time cash flow ({{ selected_currency }})
+        </div>
+    </div>
+
+    <!-- Financial Health Score Card -->
+    <div class="metric-card">
+        <div class="metric-header">
+            <span class="metric-title">Financial Health</span>
+            <span style="font-size: 1.1rem;">📊</span>
+        </div>
+        <div class="metric-value-row">
+            <div class="metric-amount" style="color: {{ health_stats.color }};">
+                {{ health_stats.score }}<span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/100</span>
+            </div>
+        </div>
+        <div style="font-size: 0.85rem; margin-top: 8px; color: {{ health_stats.color }}; font-weight: 700;">
+            ● {{ health_stats.status }} ({{ health_stats.savings_rate }}% saved)
+        </div>
+    </div>
+</section>
+
+<!-- Smart Spending Insights Bar -->
+<section class="card-glass" style="margin-bottom: 30px; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 15px; text-align: center; padding: 20px 24px;">
+    <div>
+        <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Daily Burn Rate</div>
+        <div class="money-value" style="font-size: 1.25rem; font-weight: 800; color: var(--expense); margin-top: 4px;">
+            {{ curr_symbol }}{{ "%.2f"|format(burn_stats.daily_burn_rate) }}<span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">/day</span>
+        </div>
+    </div>
+    
+    <div style="border-left: 1px solid var(--border-color); padding-left: 20px;">
+        <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Safe Daily Spend</div>
+        <div class="money-value" style="font-size: 1.25rem; font-weight: 800; color: var(--primary); margin-top: 4px;">
+            {{ curr_symbol }}{{ "%.2f"|format(burn_stats.safe_daily_spend) }}<span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">/day</span>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">for next {{ burn_stats.days_remaining }} days</div>
+    </div>
+
+    <div style="border-left: 1px solid var(--border-color); padding-left: 20px;">
+        <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Runway Estimate</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: {% if burn_stats.runway_days and burn_stats.runway_days > 30 %}var(--income){% elif burn_stats.runway_days and burn_stats.runway_days > 14 %}var(--warning){% else %}var(--expense){% endif %}; margin-top: 4px;">
+            {% if burn_stats.runway_days is not none %}
+                {{ burn_stats.runway_days }} days
+            {% else %}
+                ∞ (No burn)
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Monthly Category Budgets -->
+{% if budget_progress %}
+<section class="card-glass" style="margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin: 0;">Monthly Category Budgets ({{ selected_currency }})</h2>
+        <a href="{{ url_for('manage_budgets') }}" style="font-size: 0.88rem; color: var(--primary); text-decoration: none; font-weight: 600;">⚙️ Manage Limits</a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+        {% for b in budget_progress %}
+        <div style="background: var(--bg-subtle); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">{{ b.category }}</span>
+                <span style="font-size: 0.75rem; font-weight: 700; color: {{ b.color }}; text-transform: uppercase; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 4px;">{{ b.status }}</span>
+            </div>
+
+            <div style="background: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 10px;">
+                <div style="background: {{ b.color }}; height: 100%; width: {{ b.percent }}%; transition: width 0.4s ease-in-out;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted);">
+                <span>Spent: <strong class="money-value" style="color: var(--text-primary);">{{ curr_symbol }}{{ "%.2f"|format(b.spent) }}</strong></span>
+                <span>Limit: <strong class="money-value" style="color: var(--text-primary);">{{ curr_symbol }}{{ "%.2f"|format(b.limit) }}</strong></span>
+            </div>
+            
+            <div style="text-align: right; font-size: 0.75rem; margin-top: 6px; color: {% if b.remaining < 0 %}var(--expense){% else %}var(--income){% endif %}; font-weight: 700;">
+                {% if b.remaining < 0 %}
+                    Over by {{ curr_symbol }}{{ "%.2f"|format(b.remaining|abs) }}
+                {% else %}
+                    {{ curr_symbol }}{{ "%.2f"|format(b.remaining) }} remaining
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Recent Transactions Section with Category Chips, Live Search & Bulk Operations -->
+<section class="card-glass">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+        <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin: 0;">Recent Transactions</h2>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input type="text" id="transactionSearch" class="input-glass" placeholder="🔍 Search title or notes..." onkeyup="applyFilters()" style="width: 220px;">
+            <a href="{{ url_for('export_csv') }}" class="btn-primary" style="text-decoration: none; font-size: 0.85rem; padding: 8px 14px;">
+                📥 Export CSV
+            </a>
+        </div>
+    </div>
+
+    <!-- Interactive Category Filter Chips -->
+    <div class="chip-group" id="categoryChips">
+        <button class="chip active" onclick="setFilter('all', this)">✨ All</button>
+        <button class="chip" onclick="setFilter('income', this)">💼 Income</button>
+        <button class="chip" onclick="setFilter('food', this)">🍔 Dining & Food</button>
+        <button class="chip" onclick="setFilter('housing', this)">🏠 Housing</button>
+        <button class="chip" onclick="setFilter('transport', this)">🚗 Transport</button>
+        <button class="chip" onclick="setFilter('flagged', this)">🚨 Sentinel Flagged</button>
+    </div>
+
+    <table id="transactionsTable" class="table-glass">
+        <thead>
+            <tr>
+                <th style="width: 36px; text-align: center;"><input type="checkbox" id="selectAllCb" onchange="toggleSelectAllRows(this)"></th>
+                <th>Date</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Notes</th>
+                <th>Audit Hash</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in transactions %}
+            {% set cat_clean = t['category']|lower %}
+            <tr class="transaction-row" 
+                data-type="{{ t['type']|lower }}" 
+                data-category="{{ cat_clean }}" 
+                data-flagged="{% if t['id'] in flagged_ids %}true{% else %}false{% endif %}"
+                style="{% if t['id'] in flagged_ids %}background: rgba(239, 68, 68, 0.05);{% endif %}">
+                <td style="text-align: center;"><input type="checkbox" class="select-row-cb" value="{{ t['id'] }}" onchange="updateBulkToolbar()"></td>
+                <td>{{ t['date'] }}</td>
+                <td class="searchable-title">
+                    <strong>{{ t['title'] }}</strong>
+                    {% if t['id'] in flagged_ids %}
+                        <div style="font-size: 0.72rem; color: var(--expense); font-weight: 700; margin-top: 2px;">
+                            {{ flagged_ids[t['id']] }}
+                        </div>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="category-badge" style="background: var(--bg-subtle); padding: 4px 10px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; border: 1px solid var(--border-color);">
+                        {% if 'food' in cat_clean or 'grocer' in cat_clean or 'din' in cat_clean %}🍔
+                        {% elif 'salary' in cat_clean or 'income' in cat_clean or 'freelance' in cat_clean %}💼
+                        {% elif 'rent' in cat_clean or 'house' in cat_clean or 'home' in cat_clean %}🏠
+                        {% elif 'util' in cat_clean or 'bill' in cat_clean or 'electric' in cat_clean %}💡
+                        {% elif 'trans' in cat_clean or 'car' in cat_clean or 'fuel' in cat_clean or 'uber' in cat_clean %}🚗
+                        {% elif 'shop' in cat_clean or 'cloth' in cat_clean %}🛍️
+                        {% elif 'entertain' in cat_clean or 'movie' in cat_clean or 'game' in cat_clean %}🎬
+                        {% elif 'health' in cat_clean or 'med' in cat_clean or 'doctor' in cat_clean %}💊
+                        {% else %}🏷️{% endif %}
+                        {{ t['category'] }}
+                    </span>
+                </td>
+                <td style="text-transform: capitalize; font-weight: 600; font-size: 0.88rem; color: var(--text-muted);">{{ t['type'] }}</td>
+                <td class="money-value" style="font-weight: 700; color: {% if t['type'] == 'income' %}var(--income){% else %}var(--expense){% endif %};">
+                    {% set curr = t['currency'] if 'currency' in t.keys() else 'USD' %}
+                    {% set rate = t['exchange_rate'] if 'exchange_rate' in t.keys() else 1.0 %}
+                    <div>
+                        {% if t['type'] == 'income' %}+{% else %}-{% endif %}{% if curr == 'USD' %}${% else %}{{ curr }} {% endif %}{{ "%.2f"|format(t['amount']) }}
+                    </div>
+                    {% if curr != 'USD' %}
+                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">
+                            ≈ ${{ "%.2f"|format(t['amount'] * rate) }} base
+                        </div>
+                    {% endif %}
+                </td>
+                <td class="searchable-notes">{{ t['notes'] if t['notes'] else '-' }}</td>
+                <td>
+                    <code style="font-size: 0.75rem; background: var(--bg-subtle); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-muted);" title="{{ t['curr_hash'] }}">
+                        {{ (t['curr_hash'] or '00000000')[:8] }}...
+                    </code>
+                </td>
+                <td>
+                    <a href="#" onclick='openEditTransactionModal({ id: {{ t["id"] }}, title: {{ t["title"]|tojson }}, amount: {{ t["amount"] }}, currency: {{ (t["currency"] or "USD")|tojson }}, exchange_rate: {{ t["exchange_rate"] or 1.0 }}, type: {{ t["type"]|tojson }}, category: {{ t["category"]|tojson }}, date: {{ t["date"]|tojson }}, notes: {{ (t["notes"] or "")|tojson }} }); return false;' style="color: var(--primary); font-weight: 600; text-decoration: none; margin-right: 8px;">Edit</a>
+                    <form method="POST" action="{{ url_for('delete_transaction', id=t['id']) }}" style="display:inline;">
+                        <button type="submit" style="background: none; border: none; color: var(--expense); font-weight: 600; cursor: pointer;" onclick="return confirm('Are you sure you want to delete this transaction?');">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted); font-style: italic;">
+                    No transactions found. <a href="{{ url_for('add_transaction') }}" style="color: var(--primary); font-weight: 600;">Add one to get started!</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<!-- Floating Bulk Operations Batch Action Toolbar -->
+<form id="bulkForm" method="POST" action="{{ url_for('bulk_transactions') }}" class="bulk-toolbar">
+    <input type="hidden" id="selectedIdsInput" name="selected_ids" value="">
+    <input type="hidden" id="bulkActionInput" name="action" value="">
+    <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary);">
+        <span id="selectedCount">0</span> selected
+    </span>
+    <button type="button" onclick="submitBulkAction('delete')" class="btn-control" style="color: var(--expense); border-color: rgba(239,68,68,0.3); font-weight: 700;">
+        🗑️ Delete Selected
+    </button>
+    <div style="display: flex; align-items: center; gap: 6px;">
+        <input type="text" id="bulkCategoryInput" name="new_category" class="input-glass" placeholder="New Category..." style="padding: 5px 10px; font-size: 0.82rem; width: 140px;">
+        <button type="button" onclick="submitBulkAction('recategorize')" class="btn-primary" style="font-size: 0.82rem; padding: 6px 12px;">
+            🏷️ Recategorize
+        </button>
+    </div>
+</form>
+
+<!-- Modal Dialog for Savings Goal Deposit -->
+<dialog id="depositModal" class="glass-modal">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 id="depositModalTitle" style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0;">💰 Savings Deposit</h3>
+        <button type="button" onclick="document.getElementById('depositModal').close()" style="background: none; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer;">✕</button>
+    </div>
+    <form id="depositForm" method="POST" action="">
+        <div style="margin-bottom: 16px;">
+            <label for="deposit_amount" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block;">Deposit Amount:</label>
+            <input type="number" id="deposit_amount" name="deposit_amount" step="0.01" min="0.01" class="input-glass" placeholder="0.00" required style="width: 100%;">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" onclick="document.getElementById('depositModal').close()" style="background: var(--bg-subtle); border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 14px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer;">Cancel</button>
+            <button type="submit" class="btn-primary">Deposit Funds</button>
+        </div>
+    </form>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 1. Initialize 7-Day Mini Sparkline Charts inside Summary Cards
+    const sparklineData = {{ sparkline_data|tojson }};
+
+    function createSparkline(canvasId, points, colorHex) {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return;
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: sparklineData.labels,
+                datasets: [{
+                    data: points,
+                    borderColor: colorHex,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    fill: true,
+                    backgroundColor: colorHex + '15',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                }
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        createSparkline('sparklineIncome', sparklineData.income, '#10b981');
+        createSparkline('sparklineExpense', sparklineData.expense, '#ef4444');
+        createSparkline('sparklineNet', sparklineData.net, '#3b82f6');
+    });
+
+    // 2. Interactive Category Filter Chips & Live Search Logic
+    let currentCategoryFilter = 'all';
+
+    function setFilter(filterType, buttonEl) {
+        currentCategoryFilter = filterType;
+        
+        // Toggle Active Chip Styling
+        document.querySelectorAll('#categoryChips .chip').forEach(btn => btn.classList.remove('active'));
+        if (buttonEl) buttonEl.classList.add('active');
+
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const query = document.getElementById('transactionSearch').value.toLowerCase();
+        const rows = document.querySelectorAll('.transaction-row');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const type = row.getAttribute('data-type');
+            const category = row.getAttribute('data-category');
+            const isFlagged = row.getAttribute('data-flagged') === 'true';
+
+            let matchesChip = false;
+            if (currentCategoryFilter === 'all') {
+                matchesChip = true;
+            } else if (currentCategoryFilter === 'income' && type === 'income') {
+                matchesChip = true;
+            } else if (currentCategoryFilter === 'flagged' && isFlagged) {
+                matchesChip = true;
+            } else if (category.includes(currentCategoryFilter)) {
+                matchesChip = true;
+            }
+
+            const matchesSearch = text.includes(query);
+
+            if (matchesChip && matchesSearch) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+                // A hidden row must not stay selected, or bulk actions would hit it unseen
+                const cb = row.querySelector('.select-row-cb');
+                if (cb) cb.checked = false;
+            }
+        });
+        document.getElementById('selectAllCb').checked = false;
+        updateBulkToolbar();
+    }
+
+    // 3. Savings Goal Deposit Modal Trigger
+    function openDepositModal(goalId, goalTitle) {
+        document.getElementById('depositModalTitle').textContent = `💰 Deposit into ${goalTitle}`;
+        document.getElementById('depositForm').action = `/savings/deposit/${goalId}`;
+        document.getElementById('deposit_amount').value = '';
+        document.getElementById('depositModal').showModal();
+    }
+
+    // 4. Multi-Select Checkboxes & Floating Bulk Toolbar Logic
+    function toggleSelectAllRows(masterCb) {
+        const rowCbs = document.querySelectorAll('.select-row-cb');
+        rowCbs.forEach(cb => {
+            const tr = cb.closest('tr');
+            if (tr.style.display !== 'none') {
+                cb.checked = masterCb.checked;
+            }
+        });
+        updateBulkToolbar();
+    }
+
+    function updateBulkToolbar() {
+        const checkedCbs = document.querySelectorAll('.select-row-cb:checked');
+        const toolbar = document.getElementById('bulkForm');
+        const countSpan = document.getElementById('selectedCount');
+
+        if (checkedCbs.length > 0) {
+            countSpan.textContent = checkedCbs.length;
+            toolbar.classList.add('visible');
+        } else {
+            toolbar.classList.remove('visible');
+        }
+    }
+
+    function submitBulkAction(actionType) {
+        // Only act on rows that are currently visible (hidden by search/filter = not selected)
+        const checkedCbs = Array.from(document.querySelectorAll('.select-row-cb:checked'))
+            .filter(cb => cb.closest('tr').style.display !== 'none');
+        const selectedIds = checkedCbs.map(cb => cb.value);
+
+        if (selectedIds.length === 0) return;
+
+        if (actionType === 'delete') {
+            if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected transactions?`)) {
+                return;
+            }
+        } else if (actionType === 'recategorize') {
+            const newCat = document.getElementById('bulkCategoryInput').value.trim();
+            if (!newCat) {
+                alert('Please enter a category name for recategorization.');
+                return;
+            }
+        }
+
+        document.getElementById('selectedIdsInput').value = selectedIds.join(',');
+        document.getElementById('bulkActionInput').value = actionType;
+        document.getElementById('bulkForm').submit();
+    }
+</script>
+{% endblock %}

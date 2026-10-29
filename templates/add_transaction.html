@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Transaction - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Add New Transaction</h2>
+    <form method="POST" action="{{ url_for('add_transaction') }}">
+        <div>
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" placeholder="e.g. European Client Invoice, London Train Ticket" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px;">
+            <div>
+                <label for="amount">Amount:</label>
+                <input type="number" id="amount" name="amount" step="0.01" min="0.01" placeholder="0.00" required>
+            </div>
+
+            <div>
+                <label for="currency">Currency:</label>
+                <select id="currency" name="currency" onchange="updateFxRateHelper()">
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="INR">INR (₹)</option>
+                    <option value="CAD">CAD ($)</option>
+                    <option value="JPY">JPY (¥)</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div>
+                <label for="exchange_rate">Exchange Rate (to USD):</label>
+                <input type="number" id="exchange_rate" name="exchange_rate" step="any" min="0.000001" value="1.0000" required>
+                <div id="rateHint" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">1 USD = 1.0000 USD</div>
+            </div>
+
+            <div>
+                <label for="type">Type:</label>
+                <select id="type" name="type" required>
+                    <option value="expense">Expense</option>
+                    <option value="income">Income</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div>
+                <label for="category">Category:</label>
+                <input list="category-options" id="category" name="category" placeholder="e.g. Freelance, Food, Travel" required>
+                <datalist id="category-options">
+                    <option value="Salary & Wages">
+                    <option value="Freelance & Consulting">
+                    <option value="Food & Dining">
+                    <option value="Travel & Lodging">
+                    <option value="Software & Hosting">
+                    <option value="Rent & Housing">
+                    <option value="Utilities">
+                    <option value="Transportation">
+                </datalist>
+            </div>
+
+            <div>
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+        </div>
+
+        <div>
+            <label for="notes">Notes:</label>
+            <textarea id="notes" name="notes" placeholder="Optional notes..."></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+            <button type="submit">Save & Seal Transaction</button>
+            <a href="{{ url_for('index') }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        const d = new Date();
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        document.getElementById('date').value = d.toISOString().slice(0, 10);
+    })();
+
+    const standardRates = {
+        'USD': 1.0000,
+        'EUR': 1.0920,
+        'GBP': 1.2850,
+        'INR': 0.0120,
+        'CAD': 0.7350,
+        'JPY': 0.0069
+    };
+
+    function updateFxRateHelper() {
+        const curr = document.getElementById('currency').value;
+        const rate = standardRates[curr] || 1.0;
+        document.getElementById('exchange_rate').value = rate.toFixed(4);
+        document.getElementById('rateHint').textContent = `1 ${curr} = $${rate.toFixed(4)} USD`;
+    }
+</script>
+{% endblock %}

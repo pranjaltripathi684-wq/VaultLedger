@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Foreign Exchange (FX) Ledger & Gains - Finance Tracker{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h2 style="margin: 0; color: var(--text-primary);">💱 Multi-Currency & FX Gain/Loss Ledger</h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
+            ASC 830 / IAS 21 compliant Foreign Exchange accounting: Weighted-Average Cost Basis, Mark-to-Market Unrealized Gains, and Settled Realized P&L.
+        </p>
+    </div>
+    <a href="{{ url_for('index') }}" style="color: var(--primary); text-decoration: none; font-weight: 600;">← Back to Dashboard</a>
+</div>
+
+<!-- FX Metrics Overview Cards -->
+<section class="summary">
+    <div class="card">
+        <h3>Foreign Currency Assets</h3>
+        <p class="money-value" style="color: var(--primary);">${{ "%.2f"|format(fx.total_fx_portfolio_value_usd) }}</p>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Market value in Base USD</div>
+    </div>
+
+    <div class="card">
+        <h3>Unrealized FX Gain/Loss</h3>
+        <p class="money-value" style="color: {% if fx.total_unrealized_gain >= 0 %}var(--income){% else %}var(--expense){% endif %};">
+            {% if fx.total_unrealized_gain >= 0 %}+{% endif %}${{ "%.2f"|format(fx.total_unrealized_gain) }}
+        </p>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Paper gain from currency fluctuation</div>
+    </div>
+
+    <div class="card">
+        <h3>Settled Realized FX P&L</h3>
+        <p class="money-value" style="color: {% if fx.total_realized_gain >= 0 %}var(--income){% else %}var(--expense){% endif %};">
+            {% if fx.total_realized_gain >= 0 %}+{% endif %}${{ "%.2f"|format(fx.total_realized_gain) }}
+        </p>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Profit/Loss locked in from spent currency</div>
+    </div>
+
+    <div class="card">
+        <h3>Total Net FX Impact</h3>
+        <p class="money-value" style="color: {% if fx.total_net_fx_pnl >= 0 %}var(--income){% else %}var(--expense){% endif %};">
+            {% if fx.total_net_fx_pnl >= 0 %}+{% endif %}${{ "%.2f"|format(fx.total_net_fx_pnl) }}
+        </p>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Combined Portfolio P&L</div>
+    </div>
+</section>
+
+<!-- Currency Holdings & Accounting Matrix -->
+<section class="transactions" style="margin-bottom: 30px;">
+    <h2>Foreign Currency Position Matrix</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Currency</th>
+                <th>Holding Units</th>
+                <th>Avg Acquisition Cost</th>
+                <th>Current Market Rate</th>
+                <th>Cost Basis (USD)</th>
+                <th>Current Value (USD)</th>
+                <th>Unrealized P&L</th>
+                <th>Realized P&L</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in fx.currencies %}
+            <tr>
+                <td><strong>{{ c.currency }}</strong></td>
+                <td>{{ "%.2f"|format(c.balance) }} {{ c.currency }}</td>
+                <td>${{ "%.4f"|format(c.avg_cost_rate) }}</td>
+                <td>${{ "%.4f"|format(c.market_rate) }}</td>
+                <td>${{ "%.2f"|format(c.total_cost_basis_usd) }}</td>
+                <td>${{ "%.2f"|format(c.current_val_usd) }}</td>
+                <td style="font-weight: 700; color: {% if c.unrealized_gain_usd >= 0 %}var(--income){% else %}var(--expense){% endif %};">
+                    {% if c.unrealized_gain_usd >= 0 %}+{% endif %}${{ "%.2f"|format(c.unrealized_gain_usd) }}
+                </td>
+                <td style="font-weight: 700; color: {% if c.realized_gain_usd >= 0 %}var(--income){% else %}var(--expense){% endif %};">
+                    {% if c.realized_gain_usd >= 0 %}+{% endif %}${{ "%.2f"|format(c.realized_gain_usd) }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                    No foreign currency positions active. When you add income or expenses in EUR, GBP, INR, etc., they will be tracked here automatically!
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<!-- Mark-to-Market Stress Test Simulator -->
+<section style="background: var(--bg-card); padding: 24px; border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <h3 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 6px;">⚡ Interactive FX Revaluation Stress-Tester</h3>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 18px;">
+        Adjust exchange rates below to simulate currency devaluations or rallies and instantly stress-test your portfolio's unrealized P&L:
+    </p>
+
+    <form method="POST" action="{{ url_for('fx_portfolio') }}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; background: none; border: none; padding: 0; box-shadow: none;">
+        <div>
+            <label for="rate_EUR">EUR / USD:</label>
+            <input type="number" id="rate_EUR" name="rate_EUR" step="0.0001" value="{{ rates['EUR'] }}">
+        </div>
+
+        <div>
+            <label for="rate_GBP">GBP / USD:</label>
+            <input type="number" id="rate_GBP" name="rate_GBP" step="0.0001" value="{{ rates['GBP'] }}">
+        </div>
+
+        <div>
+            <label for="rate_INR">INR / USD:</label>
+            <input type="number" id="rate_INR" name="rate_INR" step="0.0001" value="{{ rates['INR'] }}">
+        </div>
+
+        <div>
+            <label for="rate_CAD">CAD / USD:</label>
+            <input type="number" id="rate_CAD" name="rate_CAD" step="0.0001" value="{{ rates['CAD'] }}">
+        </div>
+
+        <div>
+            <label for="rate_JPY">JPY / USD:</label>
+            <input type="number" id="rate_JPY" name="rate_JPY" step="0.0001" value="{{ rates['JPY'] }}">
+        </div>
+
+        <div style="display: flex; align-items: flex-end;">
+            <button type="submit" style="width: 100%;">Revalue Portfolio</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

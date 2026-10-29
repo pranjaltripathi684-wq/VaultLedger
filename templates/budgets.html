@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Budgets - Finance Tracker{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
+    <!-- Form to Set a Budget -->
+    <div class="form-container" style="margin: 0; max-width: none;">
+        <h2>Set Monthly Budget</h2>
+        <form method="POST" action="{{ url_for('manage_budgets') }}">
+            <div>
+                <label for="category">Category:</label>
+                <input list="category-options" id="category" name="category" placeholder="e.g. Food, Rent, Entertainment" required>
+                <datalist id="category-options">
+                    <option value="Food & Dining">
+                    <option value="Groceries">
+                    <option value="Rent & Housing">
+                    <option value="Utilities">
+                    <option value="Transportation">
+                    <option value="Entertainment">
+                    <option value="Shopping">
+                    <option value="Healthcare">
+                </datalist>
+            </div>
+
+            <div>
+                <label for="monthly_limit">Monthly Budget Limit:</label>
+                <input type="number" id="monthly_limit" name="monthly_limit" step="0.01" min="0.01" placeholder="e.g. 300" required>
+            </div>
+
+            <div>
+                <label for="budget_currency">Currency:</label>
+                <select id="budget_currency" name="currency">
+                    {% for code, symbol in currency_symbols.items() %}
+                        <option value="{{ code }}">{{ code }} ({{ symbol }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit">Save Budget</button>
+        </form>
+    </div>
+
+    <!-- Active Budgets Table -->
+    <div class="transactions" style="margin: 0;">
+        <h2>Your Monthly Limits</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Monthly Limit</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in budgets %}
+                <tr>
+                    <td><strong>{{ b['category'] }}</strong></td>
+                    <td class="money-value" style="font-weight: 600;">{{ currency_symbols.get(b['currency'] or 'USD', '$') }}{{ "%.2f"|format(b['monthly_limit']) }} {{ b['currency'] or 'USD' }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('delete_budget', id=b['id']) }}" style="display:inline;">
+                            <button type="submit" onclick='return confirm({{ ("Remove budget for " ~ b["category"] ~ "?")|tojson }});'>Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align: center; padding: 20px; color: #64748b;">
+                        No budgets set yet. Use the form on the left to set your first limit!
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

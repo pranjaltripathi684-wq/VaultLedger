@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Transaction - Finance Tracker{% endblock %}
+
+{% block content %}
+
+<h2>Edit Transaction</h2>
+
+<form method="POST" action="{{ url_for('edit_transaction', id=transaction['id']) }}">
+
+
+<div>
+    <label for="title">Title:</label>
+    <input type="text" id="title" name="title" value="{{ transaction['title'] }}" required>
+</div>
+
+<div>
+    <label for="amount">Amount:</label>
+    <input type="number" id="amount" name="amount" step="0.01" min="0.01" value="{{ transaction['amount'] }}" required>
+</div>
+
+<div>
+    <label for="currency">Currency:</label>
+    <select id="currency" name="currency" onchange="document.getElementById('exchange_rate').value = (standardRates[this.value] || 1).toFixed(4)">
+        {% for code in rates.keys() %}
+        <option value="{{ code }}" {% if (transaction['currency'] or 'USD') == code %}selected{% endif %}>{{ code }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div>
+    <label for="exchange_rate">Exchange Rate (to USD):</label>
+    <input type="number" id="exchange_rate" name="exchange_rate" step="any" min="0.000001" value="{{ transaction['exchange_rate'] or 1.0 }}" required>
+</div>
+
+<div>
+    <label for="type">Type:</label>
+    <select id="type" name="type" required>
+        <option value="expense" {% if transaction['type'] == 'expense' %}selected{% endif %}>
+            Expense
+        </option>
+
+        <option value="income" {% if transaction['type'] == 'income' %}selected{% endif %}>
+            Income
+        </option>
+    </select>
+</div>
+
+<div>
+    <label for="category">Category:</label>
+    <input type="text" id="category" name="category" value="{{ transaction['category'] }}" required>
+</div>
+
+<div>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="{{ transaction['date'] }}" required>
+</div>
+
+<div>
+    <label for="notes">Notes:</label>
+    <textarea id="notes" name="notes">{{ transaction['notes'] or '' }}</textarea>
+</div>
+
+<button type="submit">Update Transaction</button>
+
+
+</form>
+
+<script>
+    const standardRates = {{ rates|tojson }};
+</script>
+
+{% endblock %}
