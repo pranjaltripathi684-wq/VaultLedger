@@ -1,0 +1,201 @@
+===============================================================================
+                     PERSONAL FINANCE TRACKER APPLICATION
+                   Comprehensive Technical & Project Guide
+===============================================================================
+
+Author: Pranjal Tripathi
+Tech Stack: Python, Flask, SQLite3, HTML5, CSS3, JavaScript, Chart.js
+
+-------------------------------------------------------------------------------
+1. PROJECT OVERVIEW
+-------------------------------------------------------------------------------
+The Personal Finance Tracker is a full-stack web application designed to help
+individuals monitor their personal cash flow, track sources of income, manage
+daily living expenses, and visualize spending habits across different categories.
+
+The core goal of the project was to build a clean, self-contained, and secure 
+application without unnecessary third-party overhead, focusing on fundamental 
+web development concepts:
+  - Database schema design & data integrity.
+  - Full CRUD (Create, Read, Update, Delete) request lifecycles.
+  - Server-side template rendering using Jinja2.
+  - Interactive client-side charting using Chart.js.
+  - Security practices (SQL injection prevention, safe deletion, PRG pattern).
+
+
+-------------------------------------------------------------------------------
+2. TECHNOLOGY STACK & RATIONALE
+-------------------------------------------------------------------------------
+
+A. Backend: Python & Flask
+   - Why Python? Readable, maintainable, and standard for scripting and logic.
+   - Why Flask? Unlike heavyweight frameworks like Django, Flask is a lightweight
+     WSGI micro-framework. It does not enforce rigid boilerplate or hidden ORM
+     magic, making it ideal for learning how HTTP requests, routing, and data
+     binding truly operate under the hood.
+
+B. Database: SQLite3
+   - SQLite is a serverless, zero-configuration, file-based relational database.
+   - The database lives entirely in a local file (`finance.db`), meaning no
+     external database server (like PostgreSQL or MySQL) needs to be installed,
+     configured, or paid for.
+   - In Python, SQLite is built directly into the standard library (`sqlite3`),
+     meaning zero third-party dependencies are required for data storage.
+
+C. Frontend: HTML5, CSS3, & Jinja2
+   - HTML5 provides semantic document structuring (<nav>, <main>, <section>).
+   - Custom CSS3 handles responsive layout grids, clean typography, cards, and
+     color-coded badges without bloated CSS frameworks like Bootstrap.
+   - Jinja2 is Flask's built-in templating engine. It lets us inject Python
+     variables, evaluate conditionals (`{% if %}`), and loop through database
+     records (`{% for %}`) directly inside HTML.
+
+D. Data Visualization: Chart.js
+   - An open-source, canvas-based JavaScript library.
+   - Renders responsive, smooth animated charts (doughnut chart for category
+     spending breakdown) directly in the browser using JSON data serialized
+     from Flask.
+
+
+-------------------------------------------------------------------------------
+3. HOW THE APPLICATION WORKS (DATA FLOW & ARCHITECTURE)
+-------------------------------------------------------------------------------
+
+The app follows the classic Model-View-Controller (MVC) architectural pattern:
+
+1. Model (Data Layer):
+   - Handled by SQLite (`schema.sql`, `db.py`, `finance.db`).
+   - Stores transactions with title, amount, type, category, date, and notes.
+
+2. Controller (Application Logic):
+   - Handled by Flask routes in `app.py`.
+   - Listens for HTTP requests (GET and POST), interacts with SQLite, runs
+     mathematical summaries, and coordinates which template to render.
+
+3. View (Presentation Layer):
+   - Handled by Jinja templates in the `templates/` directory.
+   - Renders data into human-readable HTML for the web browser.
+
+--- TYPICAL DATA FLOW LIFECYCLE ---
+
+[User Browser] 
+       │
+       ▼ (1) Submits form: POST /add with transaction data
+   [Flask: app.py]
+       │
+       ├─► (2) Validates inputs (non-empty, amount > 0, valid type)
+       ├─► (3) Connects to SQLite & executes parameterized INSERT query
+       ├─► (4) Commits changes to finance.db
+       │
+       ▼ (5) Sends HTTP 302 Redirect to '/' (Post/Redirect/Get pattern)
+[User Browser]
+       │
+       ▼ (6) Automatically sends GET request to '/'
+   [Flask: app.py]
+       │
+       ├─► (7) Queries transactions: SELECT * FROM transactions ORDER BY date DESC
+       ├─► (8) Calculates totals: Total Income, Total Expenses, Net Balance
+       ├─► (9) Aggregates expenses by category: GROUP BY category
+       ├─► (10) Packages data into JSON lists for Chart.js
+       │
+       ▼ (11) Renders index.html with the computed data
+[User Browser]
+       │
+       ▼ (12) Displays summary cards, transactions table, and Chart.js doughnut!
+
+
+-------------------------------------------------------------------------------
+4. FILE-BY-FILE BREAKDOWN
+-------------------------------------------------------------------------------
+
+1. `schema.sql`
+   - Contains the SQL table creation script.
+   - Defines the `transactions` table with specific fields:
+     * id: INTEGER PRIMARY KEY AUTOINCREMENT
+     * title: TEXT NOT NULL
+     * amount: REAL NOT NULL CHECK(amount > 0)
+     * type: TEXT NOT NULL CHECK(type IN ('income', 'expense'))
+     * category: TEXT NOT NULL
+     * date: TEXT NOT NULL CHECK(date GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]')
+     * notes: TEXT
+   - Uses SQL `CHECK` constraints to reject invalid records at the storage level.
+
+2. `db.py`
+   - Database utility module.
+   - Provides `get_db_connection()` which connects to `finance.db` and configures
+     `conn.row_factory = sqlite3.Row`. This allows Python code to access column
+     values by column name (`row['title']`) rather than tuple indices (`row[1]`).
+   - Provides `init_db()` which executes `schema.sql` to initialize or reset tables.
+
+3. `app.py`
+   - Central application router and controller.
+   - Route `/` (GET):
+     * Retrieves all records.
+     * Computes `total_income`, `total_expense`, and `balance`.
+     * Runs SQL category aggregation query for expense charts.
+     * Renders `index.html`.
+   - Route `/add` (GET & POST):
+     * GET renders the input form (`add_transaction.html`).
+     * POST validates user input, executes SQL INSERT, and redirects to `/`.
+   - Route `/edit/<int:id>` (GET & POST):
+     * GET fetches existing transaction by ID and populates `edit_transaction.html`.
+     * POST validates updated inputs and executes SQL UPDATE query.
+   - Route `/delete/<int:id>` (POST):
+     * Executes SQL DELETE query to remove the transaction by ID and redirects.
+
+4. `templates/base.html`
+   - The master parent template using Jinja2 inheritance (`{% block content %}`).
+   - Contains navigation bar, embedded modern CSS layout styles, and the Chart.js
+     CDN script tag.
+   - Ensures all pages share a consistent look and feel without repeating code.
+
+5. `templates/index.html`
+   - Dashboard page inheriting from `base.html`.
+   - Displays 3 summary metric cards: Income (green), Expenses (red), Balance.
+   - Renders a clean table with chronological transactions and action buttons.
+   - Includes Chart.js script that converts Python lists (`chart_labels`,
+     `chart_data`) into JSON via the `| tojson` filter to render the doughnut chart.
+
+6. `templates/add_transaction.html` & `templates/edit_transaction.html`
+   - Form pages for inputting and updating transaction information.
+   - Use semantic input types (`type="date"`, `step="0.01"`, `min="0.01"`) for
+     browser-level validation before submitting.
+
+
+-------------------------------------------------------------------------------
+5. KEY DESIGN & SECURITY PRACTICES IMPLEMENTED
+-------------------------------------------------------------------------------
+
+1. Prevention of SQL Injection:
+   - User inputs are NEVER concatenated into SQL strings using Python f-strings
+     or `%s`.
+   - Parameterized queries (`?` placeholders) are used everywhere:
+     `conn.execute('SELECT * FROM transactions WHERE id = ?', (id,))`
+   - SQLite safely escapes all inputs, preventing SQL injection vulnerabilities.
+
+2. Post/Redirect/Get (PRG) Pattern:
+   - Form submissions (POST requests) always return a `redirect(url_for('index'))`
+     rather than rendering a template directly.
+   - This prevents accidental double-submissions when users refresh the browser.
+
+3. Safe Deletion via POST:
+   - Deletion of records is restricted to HTTP `POST` requests wrapped in a form
+     with JavaScript confirmation dialogues.
+   - It is never triggered by simple GET links (`<a href="/delete/1">`), which
+     prevents search crawlers or browser pre-fetching from accidentally wiping data.
+
+4. Strict Data Validation:
+   - Two layers of validation: client-side (HTML `required`, `min="0.01"`) and
+     server-side (Python checks, `try/except` float conversions, and SQLite
+     `CHECK` constraints). Even if someone bypasses the browser form, the
+     backend and database will reject bad data.
+
+5. Safe JSON Serialization:
+   - In `index.html`, Chart.js data is passed using Flask's `tojson` filter
+     (`{{ chart_labels | tojson }}`) to guarantee proper JSON encoding without
+     breaking JavaScript execution.
+
+
+===============================================================================
+                             END OF DOCUMENTATION
+===============================================================================
