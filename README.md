@@ -108,7 +108,7 @@ Double-click any of the following files in the project folder:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/your-username/VaultLedger.git
+   git clone https://github.com/pranjaltripathi684-wq/VaultLedger.git
    cd VaultLedger
    ```
 
