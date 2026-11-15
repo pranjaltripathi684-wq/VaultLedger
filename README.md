@@ -2,6 +2,8 @@
 
 A personal finance ledger that runs on your own computer. You write entries the way you'd say them, and it keeps the books: categories, budgets, recurring bills, forecasts and foreign currency, all stored in a local SQLite file that never leaves your machine.
 
+**▶ Live demo: [vaultledger-black.vercel.app](https://vaultledger-black.vercel.app)** — opens instantly with sample data, no sign-up. Try anything; the demo resets on its own.
+
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=flat-square&logo=python)
 ![Flask](https://img.shields.io/badge/Flask-3-black?style=flat-square&logo=flask)
 ![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react)

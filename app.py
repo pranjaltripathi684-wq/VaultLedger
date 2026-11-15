@@ -2254,6 +2254,10 @@ def initialize_database():
     conn = get_db_connection()
     try:
         ensure_columns(conn)
+        if os.environ.get('VAULTLEDGER_DEMO'):
+            # Hosted demo: start visitors on a populated ledger instead of an empty one.
+            import demo_seed
+            demo_seed.seed(conn)
         unsealed = conn.execute("SELECT COUNT(*) AS n FROM transactions WHERE curr_hash = '' OR prev_hash = ''").fetchone()['n']
         if unsealed:
             rebuild_ledger_chain(conn)

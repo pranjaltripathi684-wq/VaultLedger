@@ -21,7 +21,12 @@ def _data_dir():
 
 
 BASE_DIR = _data_dir()
-DATABASE = os.environ.get('VAULTLEDGER_DB', os.path.join(BASE_DIR, 'finance.db'))
+# On Vercel (hosted demo) only /tmp is writable, and the app runs as a public demo.
+ON_VERCEL = bool(os.environ.get('VERCEL'))
+if ON_VERCEL:
+    os.environ.setdefault('VAULTLEDGER_DEMO', '1')
+DATABASE = os.environ.get('VAULTLEDGER_DB') or (
+    '/tmp/vaultledger-demo.db' if ON_VERCEL else os.path.join(BASE_DIR, 'finance.db'))
 SCHEMA_FILE = os.path.join(_resource_dir(), 'schema.sql')
 
 
