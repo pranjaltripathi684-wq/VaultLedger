@@ -2210,6 +2210,18 @@ def deposit_savings(id):
 
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend', 'dist')
 
+DEMO_BADGE = (
+    '<div id="vl-demo-badge" style="position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9999;'
+    'background:#1f2937;color:#f9fafb;font:500 12px/1.4 system-ui,sans-serif;padding:7px 14px;border-radius:999px;'
+    'box-shadow:0 4px 14px rgba(0,0,0,.25);display:flex;gap:10px;align-items:center;white-space:nowrap">'
+    '<span>Live demo &middot; sample data, try anything &mdash; it resets on its own</span>'
+    '<a href="https://github.com/pranjaltripathi684-wq/VaultLedger" target="_blank" rel="noopener" '
+    'style="color:#93c5fd;text-decoration:none">Source &rarr;</a>'
+    '<button onclick="this.parentNode.remove()" aria-label="Dismiss" '
+    'style="background:none;border:0;color:#9ca3af;cursor:pointer;font-size:14px;padding:0 0 0 4px">&times;</button>'
+    '</div>'
+)
+
 
 @app.route('/')
 @app.route('/<path:path>')
@@ -2222,6 +2234,11 @@ def react_frontend(path=''):
     if path and os.path.isfile(requested_file):
         return send_from_directory(FRONTEND_DIST, path)
     if os.path.isfile(os.path.join(FRONTEND_DIST, 'index.html')):
+        if os.environ.get('VAULTLEDGER_DEMO'):
+            # Hosted demo: tell visitors the data is sample data and resets.
+            with open(os.path.join(FRONTEND_DIST, 'index.html'), encoding='utf-8') as fh:
+                html = fh.read()
+            return Response(html.replace('</body>', DEMO_BADGE + '</body>'), mimetype='text/html')
         return send_from_directory(FRONTEND_DIST, 'index.html')
     return Response(
         'React client not built. Run `npm install` and `npm run build` in the frontend folder, or use `npm run dev` for development.',
